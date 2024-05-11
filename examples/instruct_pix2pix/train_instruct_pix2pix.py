@@ -20,6 +20,7 @@ import argparse
 import logging
 import math
 import os
+import io
 import shutil
 from contextlib import nullcontext
 from pathlib import Path
@@ -28,6 +29,7 @@ import accelerate
 import datasets
 import numpy as np
 import PIL
+from PIL import Image
 import pandas as pd
 import requests
 import torch
@@ -121,10 +123,18 @@ def create_dataset(image_dir):
     assert len(input_images) == len(edited_images), "Mismatch in number of files between input and edited images."
 
     data = {
-        'input_image': [os.path.join(input_images_dir, file) for file in input_images],
-        'edited_image': [os.path.join(edited_images_dir, file) for file in edited_images],
+        'input_image': [],
+        'edited_image': [],
         'edit_prompt': ["take a picture for the memorial"] * len(input_images)
     }
+
+    # Загружаем изображения и преобразуем в массивы байтов
+    for input_image, edited_image in zip(input_images, edited_images):
+        with open(os.path.join(input_images_dir, input_image), 'rb') as f:
+            data['input_image'].append(f.read())
+
+        with open(os.path.join(edited_images_dir, edited_image), 'rb') as f:
+            data['edited_image'].append(f.read())
 
     return pd.DataFrame(data)
 
@@ -132,8 +142,17 @@ def load_custom_dataset(base_dir):
     train_df = create_dataset(os.path.join(base_dir, 'train'))
     test_df = create_dataset(os.path.join(base_dir, 'test'))
 
-    train_dataset = Dataset.from_pandas(train_df)
-    test_dataset = Dataset.from_pandas(test_df)
+    # Создаем датасеты с типом Image
+    train_dataset = Dataset.from_pandas(train_df, features={
+        'input_image': Image(),
+        'edited_image': Image(),
+        'edit_prompt': Value('string')
+    })
+    test_dataset = Dataset.from_pandas(test_df, features={
+        'input_image': Image(),
+        'edited_image': Image(),
+        'edit_prompt': Value('string')
+    })
 
     return DatasetDict({
         'train': train_dataset,
@@ -141,6 +160,7 @@ def load_custom_dataset(base_dir):
     })
 
 dataset = load_custom_dataset('Dataset')
+
 
 
 def parse_args():
