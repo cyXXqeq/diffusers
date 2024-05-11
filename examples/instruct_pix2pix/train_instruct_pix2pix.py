@@ -28,6 +28,7 @@ import accelerate
 import datasets
 import numpy as np
 import PIL
+import pandas as pd
 import requests
 import torch
 import torch.nn as nn
@@ -51,6 +52,7 @@ from diffusers.training_utils import EMAModel
 from diffusers.utils import check_min_version, deprecate, is_wandb_available
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module
+from datasets import DatasetDict, Dataset
 
 
 if is_wandb_available():
@@ -107,6 +109,38 @@ def log_validation(
             for edited_image in edited_images:
                 wandb_table.add_data(wandb.Image(original_image), wandb.Image(edited_image), args.validation_prompt)
             tracker.log({"validation": wandb_table})
+
+
+def create_dataset(image_dir):
+    input_images_dir = os.path.join(image_dir, 'A')
+    edited_images_dir = os.path.join(image_dir, 'B')
+
+    input_images = sorted(os.listdir(input_images_dir))
+    edited_images = sorted(os.listdir(edited_images_dir))
+
+    assert len(input_images) == len(edited_images), "Mismatch in number of files between input and edited images."
+
+    data = {
+        'input_image': [os.path.join(input_images_dir, file) for file in input_images],
+        'edited_image': [os.path.join(edited_images_dir, file) for file in edited_images],
+        'edit_prompt': ["take a picture for the memorial"] * len(input_images)
+    }
+
+    return pd.DataFrame(data)
+
+def load_custom_dataset(base_dir):
+    train_df = create_dataset(os.path.join(base_dir, 'train'))
+    test_df = create_dataset(os.path.join(base_dir, 'test'))
+
+    train_dataset = Dataset.from_pandas(train_df)
+    test_dataset = Dataset.from_pandas(test_df)
+
+    return DatasetDict({
+        'train': train_dataset,
+        'test': test_dataset
+    })
+
+dataset = load_custom_dataset('Dataset')
 
 
 def parse_args():
@@ -628,16 +662,17 @@ def main():
             cache_dir=args.cache_dir,
         )
     else:
-        data_files = {}
-        if args.train_data_dir is not None:
-            data_files["train"] = os.path.join(args.train_data_dir, "**")
-        dataset = load_dataset(
-            "imagefolder",
-            data_files=data_files,
-            cache_dir=args.cache_dir,
-        )
+        # data_files = {}
+        # if args.train_data_dir is not None:
+        #     data_files["train"] = os.path.join(args.train_data_dir, "**")
+        # dataset = load_dataset(
+        #     "imagefolder",
+        #     data_files=data_files,
+        #     cache_dir=args.cache_dir,
+        # )
         # See more about loading custom images at
         # https://huggingface.co/docs/datasets/main/en/image_load#imagefolder
+        dataset = load_custom_dataset(args.train_data_dir)
 
     # Preprocessing the datasets.
     # We need to tokenize inputs and targets.
