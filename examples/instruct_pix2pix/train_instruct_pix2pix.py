@@ -54,7 +54,7 @@ from diffusers.training_utils import EMAModel
 from diffusers.utils import check_min_version, deprecate, is_wandb_available
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module
-from datasets import DatasetDict, Dataset
+from datasets import Dataset, DatasetDict, Features, Value
 
 
 if is_wandb_available():
@@ -142,25 +142,22 @@ def load_custom_dataset(base_dir):
     train_df = create_dataset(os.path.join(base_dir, 'train'))
     test_df = create_dataset(os.path.join(base_dir, 'test'))
 
-    # Создаем датасеты с типом Image
-    train_dataset = Dataset.from_pandas(train_df, features={
-        'input_image': Image(),
-        'edited_image': Image(),
+    # Создаем датасеты с типом Value("binary") для изображений
+    train_dataset = Dataset.from_pandas(train_df, features=Features({
+        'input_image': Value("binary"),
+        'edited_image': Value("binary"),
         'edit_prompt': Value('string')
-    })
-    test_dataset = Dataset.from_pandas(test_df, features={
-        'input_image': Image(),
-        'edited_image': Image(),
+    }))
+    test_dataset = Dataset.from_pandas(test_df, features=Features({
+        'input_image': Value("binary"),
+        'edited_image': Value("binary"),
         'edit_prompt': Value('string')
-    })
+    }))
 
     return DatasetDict({
         'train': train_dataset,
         'test': test_dataset
     })
-
-dataset = load_custom_dataset('Dataset')
-
 
 
 def parse_args():
