@@ -681,6 +681,7 @@ def main():
     # Preprocessing the datasets.
     # We need to tokenize inputs and targets.
     column_names = dataset["train"].column_names
+    print(dataset)
     print(column_names)
 
     # 6. Get the column names for input/target.
