@@ -184,27 +184,27 @@ def create_dataset(image_dir):
     return data
 
 
-# def load_custom_dataset(base_dir):
-#     train_df = create_dataset(os.path.join(base_dir, "train"))
-#     test_df = create_dataset(os.path.join(base_dir, "test"))
-
-#     train_dataset = Dataset.from_pandas(train_df)
-#     test_dataset = Dataset.from_pandas(test_df)
-
-#     return DatasetDict({"train": train_dataset, "test": test_dataset})
-
-
-def load_custom_dataset(base_dir, resolution=256):
-    train_data = create_dataset(os.path.join(base_dir, 'train'), resolution)
-    test_data = create_dataset(os.path.join(base_dir, 'test'), resolution)
+def load_custom_dataset(base_dir):
+    train_data = create_dataset(os.path.join(base_dir, "train"))
+    test_data = create_dataset(os.path.join(base_dir, "test"))
 
     train_dataset = Dataset.from_dict(train_data)
     test_dataset = Dataset.from_dict(test_data)
 
-    return DatasetDict({
-        'train': train_dataset,
-        'test': test_dataset
-    })
+    return DatasetDict({"train": train_dataset, "test": test_dataset})
+
+
+# def load_custom_dataset(base_dir, resolution=256):
+#     train_data = create_dataset(os.path.join(base_dir, 'train'), resolution)
+#     test_data = create_dataset(os.path.join(base_dir, 'test'), resolution)
+
+#     train_dataset = Dataset.from_dict(train_data)
+#     test_dataset = Dataset.from_dict(test_data)
+
+#     return DatasetDict({
+#         'train': train_dataset,
+#         'test': test_dataset
+#     })
 
 
 def parse_args():
