@@ -136,52 +136,52 @@ def load_image_as_array(filepath, resolution):
         return np.array(img, dtype=np.uint8).flatten()
 
 
-def create_dataset(image_dir, resolution=256):
-    input_images_dir = os.path.join(image_dir, "A")
-    edited_images_dir = os.path.join(image_dir, "B")
-
-    input_images = sorted(os.listdir(input_images_dir))
-    edited_images = sorted(os.listdir(edited_images_dir))
-
-    assert len(input_images) == len(
-        edited_images
-    ), "Mismatch in number of files between input and edited images."
-
-    data = {
-        "input_image": [],
-        "edited_image": [],
-        "edit_prompt": ["take a picture for the memorial"] * len(input_images),
-    }
-
-    # Загружаем изображения и преобразуем в массивы байтов
-    for input_image, edited_image in zip(input_images, edited_images):
-        data["input_image"].append(
-            load_image_as_array(os.path.join(input_images_dir, input_image), resolution)
-        )
-        data["edited_image"].append(
-            load_image_as_array(os.path.join(edited_images_dir, edited_image), resolution)
-        )
-
-    # return pd.DataFrame(data)
-    return data
-
-
-# def create_dataset(image_dir):
-#     input_images_dir = os.path.join(image_dir, 'A')
-#     edited_images_dir = os.path.join(image_dir, 'B')
+# def create_dataset(image_dir, resolution=256):
+#     input_images_dir = os.path.join(image_dir, "A")
+#     edited_images_dir = os.path.join(image_dir, "B")
 
 #     input_images = sorted(os.listdir(input_images_dir))
 #     edited_images = sorted(os.listdir(edited_images_dir))
 
-#     assert len(input_images) == len(edited_images), "Mismatch in number of files between input and edited images."
+#     assert len(input_images) == len(
+#         edited_images
+#     ), "Mismatch in number of files between input and edited images."
 
 #     data = {
-#         'input_image': [os.path.join(input_images_dir, file) for file in input_images],
-#         'edited_image': [os.path.join(edited_images_dir, file) for file in edited_images],
-#         'edit_prompt': ["take a picture for the memorial"] * len(input_images)
+#         "input_image": [],
+#         "edited_image": [],
+#         "edit_prompt": ["take a picture for the memorial"] * len(input_images),
 #     }
 
-#     return pd.DataFrame(data)
+#     # Загружаем изображения и преобразуем в массивы байтов
+#     for input_image, edited_image in zip(input_images, edited_images):
+#         data["input_image"].append(
+#             load_image_as_array(os.path.join(input_images_dir, input_image), resolution)
+#         )
+#         data["edited_image"].append(
+#             load_image_as_array(os.path.join(edited_images_dir, edited_image), resolution)
+#         )
+
+#     # return pd.DataFrame(data)
+#     return data
+
+
+def create_dataset(image_dir):
+    input_images_dir = os.path.join(image_dir, 'A')
+    edited_images_dir = os.path.join(image_dir, 'B')
+
+    input_images = sorted(os.listdir(input_images_dir))
+    edited_images = sorted(os.listdir(edited_images_dir))
+
+    assert len(input_images) == len(edited_images), "Mismatch in number of files between input and edited images."
+
+    data = {
+        'input_image': [os.path.join(input_images_dir, file) for file in input_images],
+        'edited_image': [os.path.join(edited_images_dir, file) for file in edited_images],
+        'edit_prompt': ["take a picture for the memorial"] * len(input_images)
+    }
+
+    return data
 
 
 # def load_custom_dataset(base_dir):
@@ -563,6 +563,7 @@ def parse_args():
 
 
 def convert_to_np(image, resolution):
+    image = Image.open(image)
     image = image.convert("RGB").resize((resolution, resolution))
     return np.array(image).transpose(2, 0, 1)
 
