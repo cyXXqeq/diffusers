@@ -59,7 +59,7 @@ from diffusers.training_utils import EMAModel
 from diffusers.utils import check_min_version, deprecate, is_wandb_available
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module
-from datasets import Dataset, DatasetDict, Value
+from datasets import Dataset, DatasetDict, Value, Features, Array3D
 from PIL import Image
 
 
@@ -196,8 +196,18 @@ def load_custom_dataset(base_dir):
     train_df = create_dataset(os.path.join(base_dir, "train"))
     test_df = create_dataset(os.path.join(base_dir, "test"))
 
-    train_dataset = Dataset.from_pandas(train_df)
-    test_dataset = Dataset.from_pandas(test_df)
+    # Определение формата датасета с размерами изображений
+    features = Features({
+        'input_image': Array3D(dtype="uint8"),
+        'edited_image': Array3D(dtype="uint8"),
+        'edit_prompt': Value('string')
+    })
+
+    train_dataset = Dataset.from_pandas(train_df, features=features)
+    test_dataset = Dataset.from_pandas(test_df, features=features)
+
+    # train_dataset = Dataset.from_pandas(train_df)
+    # test_dataset = Dataset.from_pandas(test_df)
 
     return DatasetDict({"train": train_dataset, "test": test_dataset})
 
