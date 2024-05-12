@@ -198,15 +198,8 @@ def load_custom_dataset(base_dir, resolution=256):
     train_data = create_dataset(os.path.join(base_dir, 'train'), resolution)
     test_data = create_dataset(os.path.join(base_dir, 'test'), resolution)
 
-    # Определение формата датасета с размерами изображений
-    features = Features({
-        'input_image': Array1D(dtype="uint8", shape=(resolution * resolution * 3)),
-        'edited_image': Array1D(dtype="uint8", shape=(resolution * resolution * 3)),
-        'edit_prompt': Value('string')
-    })
-
-    train_dataset = Dataset.from_dict(train_data, features=features)
-    test_dataset = Dataset.from_dict(test_data, features=features)
+    train_dataset = Dataset.from_dict(train_data)
+    test_dataset = Dataset.from_dict(test_data)
 
     return DatasetDict({
         'train': train_dataset,
