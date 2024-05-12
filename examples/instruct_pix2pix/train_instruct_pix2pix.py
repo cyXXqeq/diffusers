@@ -59,7 +59,7 @@ from diffusers.training_utils import EMAModel
 from diffusers.utils import check_min_version, deprecate, is_wandb_available
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module
-from datasets import Dataset, DatasetDict, Value, Features, Array1D
+from datasets import Dataset, DatasetDict, Value, Features
 from PIL import Image
 
 
