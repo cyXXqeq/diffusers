@@ -54,7 +54,7 @@ from diffusers.training_utils import EMAModel
 from diffusers.utils import check_min_version, deprecate, is_wandb_available
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module
-from datasets import Dataset, DatasetDict, Features, Value
+from datasets import Dataset, DatasetDict, Features, Array3D
 
 
 if is_wandb_available():
@@ -113,6 +113,10 @@ def log_validation(
             tracker.log({"validation": wandb_table})
 
 
+def load_image_as_array(filepath):
+    with Image.open(filepath) as img:
+        return np.array(img)
+
 def create_dataset(image_dir):
     input_images_dir = os.path.join(image_dir, 'A')
     edited_images_dir = os.path.join(image_dir, 'B')
@@ -128,13 +132,16 @@ def create_dataset(image_dir):
         'edit_prompt': ["take a picture for the memorial"] * len(input_images)
     }
 
-    # Загружаем изображения и преобразуем в массивы байтов
+    # Загружаем изображения и преобразуем в массивы numpy
     for input_image, edited_image in zip(input_images, edited_images):
-        with open(os.path.join(input_images_dir, input_image), 'rb') as f:
-            data['input_image'].append(f.read())
+        input_path = os.path.join(input_images_dir, input_image)
+        edited_path = os.path.join(edited_images_dir, edited_image)
+        
+        input_img_array = load_image_as_array(input_path)
+        edited_img_array = load_image_as_array(edited_path)
 
-        with open(os.path.join(edited_images_dir, edited_image), 'rb') as f:
-            data['edited_image'].append(f.read())
+        data['input_image'].append(input_img_array)
+        data['edited_image'].append(edited_img_array)
 
     return pd.DataFrame(data)
 
@@ -142,15 +149,15 @@ def load_custom_dataset(base_dir):
     train_df = create_dataset(os.path.join(base_dir, 'train'))
     test_df = create_dataset(os.path.join(base_dir, 'test'))
 
-    # Создаем датасеты с типом Value("binary") для изображений
+    # Создаем датасеты с типом Array3D для изображений
     train_dataset = Dataset.from_pandas(train_df, features=Features({
-        'input_image': Value("binary"),
-        'edited_image': Value("binary"),
+        'input_image': Array3D(dtype="uint8", shape=(None, None, 3)),
+        'edited_image': Array3D(dtype="uint8", shape=(None, None, 3)),
         'edit_prompt': Value('string')
     }))
     test_dataset = Dataset.from_pandas(test_df, features=Features({
-        'input_image': Value("binary"),
-        'edited_image': Value("binary"),
+        'input_image': Array3D(dtype="uint8", shape=(None, None, 3)),
+        'edited_image': Array3D(dtype="uint8", shape=(None, None, 3)),
         'edit_prompt': Value('string')
     }))
 
