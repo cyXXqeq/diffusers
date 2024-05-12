@@ -59,7 +59,7 @@ from diffusers.training_utils import EMAModel
 from diffusers.utils import check_min_version, deprecate, is_wandb_available
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module
-from datasets import Dataset, DatasetDict, Value, Features, Array3D
+from datasets import Dataset, DatasetDict, Value, Features, Array1D
 from PIL import Image
 
 
@@ -126,10 +126,6 @@ def log_validation(
                 )
             tracker.log({"validation": wandb_table})
 
-
-# def load_image_as_array(filepath):
-#     with Image.open(filepath) as img:
-#         return np.array(img, dtype=np.uint8)
     
 def load_image_as_array(filepath, resolution):
     with Image.open(filepath) as img:
@@ -137,10 +133,10 @@ def load_image_as_array(filepath, resolution):
         if img.size != (resolution, resolution):
             img = img.resize((resolution, resolution))
         # Преобразуем в numpy массив
-        return np.array(img, dtype=np.uint8)
+        return np.array(img, dtype=np.uint8).flatten()
 
 
-def create_dataset(image_dir):
+def create_dataset(image_dir, resolution=256):
     input_images_dir = os.path.join(image_dir, "A")
     edited_images_dir = os.path.join(image_dir, "B")
 
@@ -160,18 +156,14 @@ def create_dataset(image_dir):
     # Загружаем изображения и преобразуем в массивы байтов
     for input_image, edited_image in zip(input_images, edited_images):
         data["input_image"].append(
-            load_image_as_array(os.path.join(input_images_dir, input_image), 256)
+            load_image_as_array(os.path.join(input_images_dir, input_image), resolution)
         )
         data["edited_image"].append(
-            load_image_as_array(os.path.join(edited_images_dir, edited_image), 256)
+            load_image_as_array(os.path.join(edited_images_dir, edited_image), resolution)
         )
-        # with open(os.path.join(input_images_dir, input_image), 'rb') as f:
-        #     data['input_image'].append(f.read())
 
-        # with open(os.path.join(edited_images_dir, edited_image), 'rb') as f:
-        #     data['edited_image'].append(f.read())
-
-    return pd.DataFrame(data)
+    # return pd.DataFrame(data)
+    return data
 
 
 # def create_dataset(image_dir):
@@ -192,24 +184,34 @@ def create_dataset(image_dir):
 #     return pd.DataFrame(data)
 
 
-def load_custom_dataset(base_dir):
-    train_df = create_dataset(os.path.join(base_dir, "train"))
-    test_df = create_dataset(os.path.join(base_dir, "test"))
+# def load_custom_dataset(base_dir):
+#     train_df = create_dataset(os.path.join(base_dir, "train"))
+#     test_df = create_dataset(os.path.join(base_dir, "test"))
+
+#     train_dataset = Dataset.from_pandas(train_df)
+#     test_dataset = Dataset.from_pandas(test_df)
+
+#     return DatasetDict({"train": train_dataset, "test": test_dataset})
+
+
+def load_custom_dataset(base_dir, resolution=256):
+    train_data = create_dataset(os.path.join(base_dir, 'train'), resolution)
+    test_data = create_dataset(os.path.join(base_dir, 'test'), resolution)
 
     # Определение формата датасета с размерами изображений
     features = Features({
-        'input_image': Array3D(dtype="uint8", shape=(256, 256, 3)),
-        'edited_image': Array3D(dtype="uint8", shape=(256, 256, 3)),
+        'input_image': Array1D(dtype="uint8", shape=(resolution * resolution * 3)),
+        'edited_image': Array1D(dtype="uint8", shape=(resolution * resolution * 3)),
         'edit_prompt': Value('string')
     })
 
-    train_dataset = Dataset.from_pandas(train_df, features=features)
-    test_dataset = Dataset.from_pandas(test_df, features=features)
+    train_dataset = Dataset.from_dict(train_data, features=features)
+    test_dataset = Dataset.from_dict(test_data, features=features)
 
-    # train_dataset = Dataset.from_pandas(train_df)
-    # test_dataset = Dataset.from_pandas(test_df)
-
-    return DatasetDict({"train": train_dataset, "test": test_dataset})
+    return DatasetDict({
+        'train': train_dataset,
+        'test': test_dataset
+    })
 
 
 def parse_args():
