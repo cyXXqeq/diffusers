@@ -127,21 +127,10 @@ def create_dataset(image_dir):
     assert len(input_images) == len(edited_images), "Mismatch in number of files between input and edited images."
 
     data = {
-        'input_image': [],
-        'edited_image': [],
+        'input_image': [os.path.join(input_images_dir, file) for file in input_images],
+        'edited_image': [os.path.join(edited_images_dir, file) for file in edited_images],
         'edit_prompt': ["take a picture for the memorial"] * len(input_images)
     }
-
-    # Загружаем изображения и преобразуем в массивы numpy
-    for input_image, edited_image in zip(input_images, edited_images):
-        input_path = os.path.join(input_images_dir, input_image)
-        edited_path = os.path.join(edited_images_dir, edited_image)
-        
-        input_img_array = load_image_as_array(input_path)
-        edited_img_array = load_image_as_array(edited_path)
-
-        data['input_image'].append(input_img_array)
-        data['edited_image'].append(edited_img_array)
 
     return pd.DataFrame(data)
 
@@ -149,17 +138,8 @@ def load_custom_dataset(base_dir):
     train_df = create_dataset(os.path.join(base_dir, 'train'))
     test_df = create_dataset(os.path.join(base_dir, 'test'))
 
-    # Создаем датасеты с типом Array3D для изображений
-    train_dataset = Dataset.from_pandas(train_df, features=Features({
-        'input_image': Array3D(dtype="uint8", shape=(None, None, 3)),
-        'edited_image': Array3D(dtype="uint8", shape=(None, None, 3)),
-        'edit_prompt': Value('string')
-    }))
-    test_dataset = Dataset.from_pandas(test_df, features=Features({
-        'input_image': Array3D(dtype="uint8", shape=(None, None, 3)),
-        'edited_image': Array3D(dtype="uint8", shape=(None, None, 3)),
-        'edit_prompt': Value('string')
-    }))
+    train_dataset = Dataset.from_pandas(train_df)
+    test_dataset = Dataset.from_pandas(test_df)
 
     return DatasetDict({
         'train': train_dataset,
