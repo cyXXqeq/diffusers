@@ -127,17 +127,17 @@ def log_validation(
             tracker.log({"validation": wandb_table})
 
 
-def load_image_as_array(filepath):
-    with Image.open(filepath) as img:
-        return np.array(img, dtype=np.uint8)
-    
-# def load_image_as_array(filepath, resolution):
+# def load_image_as_array(filepath):
 #     with Image.open(filepath) as img:
-#         # Меняем размер изображения, если это необходимо
-#         if img.size != (resolution, resolution):
-#             img = img.resize((resolution, resolution))
-#         # Преобразуем в numpy массив
 #         return np.array(img, dtype=np.uint8)
+    
+def load_image_as_array(filepath, resolution):
+    with Image.open(filepath) as img:
+        # Меняем размер изображения, если это необходимо
+        if img.size != (resolution, resolution):
+            img = img.resize((resolution, resolution))
+        # Преобразуем в numpy массив
+        return np.array(img, dtype=np.uint8)
 
 
 def create_dataset(image_dir):
@@ -160,10 +160,10 @@ def create_dataset(image_dir):
     # Загружаем изображения и преобразуем в массивы байтов
     for input_image, edited_image in zip(input_images, edited_images):
         data["input_image"].append(
-            load_image_as_array(os.path.join(input_images_dir, input_image))
+            load_image_as_array(os.path.join(input_images_dir, input_image), 256)
         )
         data["edited_image"].append(
-            load_image_as_array(os.path.join(edited_images_dir, edited_image))
+            load_image_as_array(os.path.join(edited_images_dir, edited_image), 256)
         )
         # with open(os.path.join(input_images_dir, input_image), 'rb') as f:
         #     data['input_image'].append(f.read())
@@ -198,8 +198,8 @@ def load_custom_dataset(base_dir):
 
     # Определение формата датасета с размерами изображений
     features = Features({
-        'input_image': Array3D(dtype="uint8"),
-        'edited_image': Array3D(dtype="uint8"),
+        'input_image': Array3D(dtype="uint8", shape=(256, 256, 3)),
+        'edited_image': Array3D(dtype="uint8", shape=(256, 256, 3)),
         'edit_prompt': Value('string')
     })
 
