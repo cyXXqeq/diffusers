@@ -129,7 +129,15 @@ def log_validation(
 
 def load_image_as_array(filepath):
     with Image.open(filepath) as img:
-        return np.array(img)
+        return np.array(img, dtype=np.uint8)
+    
+# def load_image_as_array(filepath, resolution):
+#     with Image.open(filepath) as img:
+#         # Меняем размер изображения, если это необходимо
+#         if img.size != (resolution, resolution):
+#             img = img.resize((resolution, resolution))
+#         # Преобразуем в numpy массив
+#         return np.array(img, dtype=np.uint8)
 
 
 def create_dataset(image_dir):
@@ -152,10 +160,10 @@ def create_dataset(image_dir):
     # Загружаем изображения и преобразуем в массивы байтов
     for input_image, edited_image in zip(input_images, edited_images):
         data["input_image"].append(
-            Image.open(os.path.join(input_images_dir, input_image))
+            load_image_as_array(os.path.join(input_images_dir, input_image))
         )
         data["edited_image"].append(
-            Image.open(os.path.join(edited_images_dir, edited_image))
+            load_image_as_array(os.path.join(edited_images_dir, edited_image))
         )
         # with open(os.path.join(input_images_dir, input_image), 'rb') as f:
         #     data['input_image'].append(f.read())
